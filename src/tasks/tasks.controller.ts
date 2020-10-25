@@ -12,9 +12,9 @@ import {
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { TaskQueryDto } from './dto/task-query.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from '../auth/get-user.decorator';
-import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { User } from '../auth/User';
 
 @UseGuards(AuthGuard('jwt'))
@@ -23,8 +23,8 @@ export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
   @Get()
-  findAll(@Query() paginationQuery: PaginationQueryDto, @GetUser() user: User) {
-    return this.tasksService.findAll(paginationQuery, user.sub);
+  findAll(@Query() taskQueryDto: TaskQueryDto, @GetUser() user: User) {
+    return this.tasksService.findAll(taskQueryDto, user.sub);
   }
 
   @Get(':id')

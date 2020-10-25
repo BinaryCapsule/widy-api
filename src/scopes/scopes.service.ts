@@ -1,12 +1,13 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Any, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreateScopeDto } from './dto/create-scope.dto';
 import { UpdateScopeDto } from './dto/update-scope.dto';
 import { Scope } from './entities/scope.entity';
 import { ScopeQueryDto } from './dto/scope-query.dto';
 import { paginate } from 'nestjs-typeorm-paginate';
 import { PAGINATION_LIMIT } from 'src/common/constants';
+import { queryBoolFilter } from '../common/helpers/queryBoolFilter';
 
 @Injectable()
 export class ScopesService {
@@ -26,7 +27,7 @@ export class ScopesService {
       {
         where: {
           owner: userId,
-          isArchived: isArchived !== undefined ? Boolean(isArchived) : Any([true, false]),
+          isArchived: queryBoolFilter(isArchived),
         },
       },
     );

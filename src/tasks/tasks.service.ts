@@ -11,7 +11,8 @@ import { DaysService } from '../days/days.service';
 import { Day } from '../days/enities/day.entity';
 import { paginate } from 'nestjs-typeorm-paginate';
 import { PAGINATION_LIMIT } from '../common/constants';
-import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { TaskQueryDto } from './dto/task-query.dto';
+import { queryBoolFilter } from '../common/helpers/queryBoolFilter';
 
 @Injectable()
 export class TasksService {
@@ -32,8 +33,8 @@ export class TasksService {
     private readonly daysService: DaysService,
   ) {}
 
-  async findAll(paginationQuery: PaginationQueryDto, userId: string) {
-    const { page = 1, limit = PAGINATION_LIMIT } = paginationQuery;
+  async findAll(taskQueryDto: TaskQueryDto, userId: string) {
+    const { page = 1, limit = PAGINATION_LIMIT, isDone } = taskQueryDto;
 
     const safeLimit = limit > PAGINATION_LIMIT ? PAGINATION_LIMIT : limit;
 
@@ -41,7 +42,10 @@ export class TasksService {
       this.taskRepository,
       { limit: safeLimit, page },
       {
-        where: { owner: userId },
+        where: {
+          owner: userId,
+          isDone: queryBoolFilter(isDone),
+        },
         order: { id: 'DESC' },
       },
     );
@@ -95,7 +99,7 @@ export class TasksService {
 
     // Check if destination section exists
     if (updateTaskDto.sectionId) {
-      await this.sectionsService.findOne(id, userId);
+      await this.sectionsService.findOne(updateTaskDto.sectionId, userId);
     }
 
     return this.taskRepository.save(task);

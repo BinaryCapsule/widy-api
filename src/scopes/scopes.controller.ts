@@ -38,7 +38,7 @@ export class ScopesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: number, @GetUser() user: User, @Body() updateScopeDto: UpdateScopeDto) {
+  update(@Param('id') id: number, @Body() updateScopeDto: UpdateScopeDto, @GetUser() user: User) {
     return this.scopesService.update(id, updateScopeDto, user.sub);
   }
 

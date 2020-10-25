@@ -45,6 +45,6 @@ export class Task {
   @JoinColumn({ name: 'sectionId' })
   section: Section;
 
-  @Column({ type: 'int' })
+  @Column()
   sectionId: number;
 }
