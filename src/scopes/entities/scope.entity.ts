@@ -1,7 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, Index } from 'typeorm';
 import { Task } from 'src/tasks/entities/task.entity';
 
 @Entity()
+@Index(['shortCode', 'owner'], { unique: true })
 export class Scope {
   @PrimaryGeneratedColumn()
   id: number;
@@ -14,6 +15,9 @@ export class Scope {
 
   @Column({ default: false })
   isArchived: boolean;
+
+  @Column({ select: false })
+  owner: string;
 
   @OneToMany(
     () => Task,

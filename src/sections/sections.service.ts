@@ -10,8 +10,13 @@ export class SectionsService {
     private readonly sectionRepository: Repository<Section>,
   ) {}
 
-  async findOne(id: number) {
-    const section = await this.sectionRepository.findOne(id);
+  async findOne(id: number, userId: string) {
+    const section = await this.sectionRepository.findOne({
+      where: {
+        id,
+        owner: userId,
+      },
+    });
 
     if (!section) {
       throw new NotFoundException(`Section with id #${id} not found`);

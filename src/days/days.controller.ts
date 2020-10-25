@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { CreateDayDto } from './dto/create-day.dto';
 import { DaysService } from './days.service';

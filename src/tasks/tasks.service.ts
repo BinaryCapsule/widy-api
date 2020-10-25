@@ -47,8 +47,13 @@ export class TasksService {
     );
   }
 
-  async findOne(id: number) {
-    const task = await this.taskRepository.findOne(id);
+  async findOne(id: number, userId: string) {
+    const task = await this.taskRepository.findOne({
+      where: {
+        id,
+        owner: userId,
+      },
+    });
 
     if (!task) {
       throw new NotFoundException(`Task #${id} not found`);
@@ -60,9 +65,7 @@ export class TasksService {
   async create(createTaskDto: CreateTaskDto, userId: string) {
     const scope = createTaskDto.scopeId ? await this.preloadScope(createTaskDto.scopeId) : null;
 
-    const task = await this.taskRepository.create(
-      scope ? { ...createTaskDto, scope, owner: userId } : { ...createTaskDto, owner: userId },
-    );
+    const task = await this.taskRepository.create({ ...createTaskDto, scope, owner: userId });
 
     const day = await this.daysService.findOne(createTaskDto.dayId, userId);
 
@@ -79,21 +82,27 @@ export class TasksService {
     return task;
   }
 
-  async update(id: number, updateTaskDto: UpdateTaskDto) {
+  async update(id: number, updateTaskDto: UpdateTaskDto, userId: string) {
     const task = await this.taskRepository.preload({
       id,
       ...updateTaskDto,
+      owner: userId,
     });
 
     if (!task) {
       throw new NotFoundException(`Task #${id} not found`);
     }
 
+    // Check if destination section exists
+    if (updateTaskDto.sectionId) {
+      await this.sectionsService.findOne(id, userId);
+    }
+
     return this.taskRepository.save(task);
   }
 
-  async remove(id: number) {
-    const task = await this.findOne(id);
+  async remove(id: number, userId: string) {
+    const task = await this.findOne(id, userId);
 
     return this.taskRepository.remove(task);
   }
