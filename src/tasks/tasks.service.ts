@@ -11,7 +11,8 @@ import { DaysService } from '../days/days.service';
 import { Day } from '../days/enities/day.entity';
 import { paginate } from 'nestjs-typeorm-paginate';
 import { PAGINATION_LIMIT } from '../common/constants';
-import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { TaskQueryDto } from './dto/task-query.dto';
+import { queryBoolFilter } from '../common/helpers/queryBoolFilter';
 
 @Injectable()
 export class TasksService {
@@ -32,8 +33,8 @@ export class TasksService {
     private readonly daysService: DaysService,
   ) {}
 
-  async findAll(paginationQuery: PaginationQueryDto, userId: string) {
-    const { page = 1, limit = PAGINATION_LIMIT } = paginationQuery;
+  async findAll(taskQueryDto: TaskQueryDto, userId: string) {
+    const { page = 1, limit = PAGINATION_LIMIT, isDone } = taskQueryDto;
 
     const safeLimit = limit > PAGINATION_LIMIT ? PAGINATION_LIMIT : limit;
 
@@ -41,14 +42,22 @@ export class TasksService {
       this.taskRepository,
       { limit: safeLimit, page },
       {
-        where: { owner: userId },
+        where: {
+          owner: userId,
+          isDone: queryBoolFilter(isDone),
+        },
         order: { id: 'DESC' },
       },
     );
   }
 
-  async findOne(id: number) {
-    const task = await this.taskRepository.findOne(id);
+  async findOne(id: number, userId: string) {
+    const task = await this.taskRepository.findOne({
+      where: {
+        id,
+        owner: userId,
+      },
+    });
 
     if (!task) {
       throw new NotFoundException(`Task #${id} not found`);
@@ -60,9 +69,7 @@ export class TasksService {
   async create(createTaskDto: CreateTaskDto, userId: string) {
     const scope = createTaskDto.scopeId ? await this.preloadScope(createTaskDto.scopeId) : null;
 
-    const task = await this.taskRepository.create(
-      scope ? { ...createTaskDto, scope, owner: userId } : { ...createTaskDto, owner: userId },
-    );
+    const task = await this.taskRepository.create({ ...createTaskDto, scope, owner: userId });
 
     const day = await this.daysService.findOne(createTaskDto.dayId, userId);
 
@@ -79,21 +86,27 @@ export class TasksService {
     return task;
   }
 
-  async update(id: number, updateTaskDto: UpdateTaskDto) {
+  async update(id: number, updateTaskDto: UpdateTaskDto, userId: string) {
     const task = await this.taskRepository.preload({
       id,
       ...updateTaskDto,
+      owner: userId,
     });
 
     if (!task) {
       throw new NotFoundException(`Task #${id} not found`);
     }
 
+    // Check if destination section exists
+    if (updateTaskDto.sectionId) {
+      await this.sectionsService.findOne(updateTaskDto.sectionId, userId);
+    }
+
     return this.taskRepository.save(task);
   }
 
-  async remove(id: number) {
-    const task = await this.findOne(id);
+  async remove(id: number, userId: string) {
+    const task = await this.findOne(id, userId);
 
     return this.taskRepository.remove(task);
   }

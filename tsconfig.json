@@ -12,5 +12,5 @@
     "baseUrl": "./",
     "incremental": true
   },
-  "include": ["*.ts", "src/**/*.ts", "test/**/*.ts", ".eslintrc.js"]
+  "include": ["*.ts", "src/**/*.ts", "test/**/*.ts", ".eslintrc.js", "ormconfig.js"]
 }

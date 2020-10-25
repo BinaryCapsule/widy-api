@@ -1,10 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Any, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreateScopeDto } from './dto/create-scope.dto';
 import { UpdateScopeDto } from './dto/update-scope.dto';
 import { Scope } from './entities/scope.entity';
 import { ScopeQueryDto } from './dto/scope-query.dto';
+import { paginate } from 'nestjs-typeorm-paginate';
+import { PAGINATION_LIMIT } from 'src/common/constants';
+import { queryBoolFilter } from '../common/helpers/queryBoolFilter';
 
 @Injectable()
 export class ScopesService {
@@ -13,21 +16,30 @@ export class ScopesService {
     private readonly scopesRepository: Repository<Scope>,
   ) {}
 
-  findAll(scopeQueryDto: ScopeQueryDto) {
-    const { limit, offset, isArchived } = scopeQueryDto;
+  findAll(scopeQueryDto: ScopeQueryDto, userId: string) {
+    const { page = 1, limit = PAGINATION_LIMIT, isArchived } = scopeQueryDto;
 
-    return this.scopesRepository.find({
-      take: limit,
-      skip: offset,
-      where: {
-        isArchived:
-          isArchived !== undefined ? Boolean(isArchived) : Any([true, false]),
+    const safeLimit = limit > PAGINATION_LIMIT ? PAGINATION_LIMIT : limit;
+
+    return paginate<Scope>(
+      this.scopesRepository,
+      { limit: safeLimit, page },
+      {
+        where: {
+          owner: userId,
+          isArchived: queryBoolFilter(isArchived),
+        },
       },
-    });
+    );
   }
 
-  async findOne(id: number) {
-    const scope = await this.scopesRepository.findOne(id);
+  async findOne(id: number, userId: string) {
+    const scope = await this.scopesRepository.findOne({
+      where: {
+        id,
+        owner: userId,
+      },
+    });
 
     if (!scope) {
       throw new NotFoundException(`Scope #${id} not found`);
@@ -36,13 +48,19 @@ export class ScopesService {
     return scope;
   }
 
-  create(createScopeDto: CreateScopeDto) {
-    const scope = this.scopesRepository.create(createScopeDto);
+  async create(createScopeDto: CreateScopeDto, userId: string) {
+    await this.validateScopeCode(createScopeDto.shortCode, userId);
+
+    const scope = this.scopesRepository.create({ ...createScopeDto, owner: userId });
 
     return this.scopesRepository.save(scope);
   }
 
-  async update(id: number, updateScopeDto: UpdateScopeDto) {
+  async update(id: number, updateScopeDto: UpdateScopeDto, userId: string) {
+    if (updateScopeDto.shortCode) {
+      await this.validateScopeCode(updateScopeDto.shortCode, userId);
+    }
+
     const scope = await this.scopesRepository.preload({
       id,
       ...updateScopeDto,
@@ -55,9 +73,19 @@ export class ScopesService {
     return this.scopesRepository.save(scope);
   }
 
-  async remove(id: number) {
-    const scope = await this.findOne(id);
+  async remove(id: number, userId: string) {
+    const scope = await this.findOne(id, userId);
 
     return this.scopesRepository.remove(scope);
+  }
+
+  private async validateScopeCode(shortCode: string, userId: string) {
+    const existingScopeWithCode = await this.scopesRepository.findOne({
+      where: { shortCode, owner: userId },
+    });
+
+    if (existingScopeWithCode) {
+      throw new ConflictException('Scope code already exists');
+    }
   }
 }
