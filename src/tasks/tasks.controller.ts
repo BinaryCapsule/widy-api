@@ -27,6 +27,11 @@ export class TasksController {
     return this.tasksService.findAll(taskQueryDto, user.sub);
   }
 
+  @Get('/active')
+  findActive(@GetUser() user: User) {
+    return this.tasksService.findActive(user.sub);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: number, @GetUser() user: User) {
     return this.tasksService.findOne(id, user.sub);
