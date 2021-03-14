@@ -113,6 +113,14 @@ export class TasksService {
       throw new NotFoundException(`Task #${id} not found`);
     }
 
+    if (updateTaskDto.scopeId !== undefined) {
+      if (updateTaskDto.scopeId) {
+        task.scope = await this.preloadScope(updateTaskDto.scopeId);
+      } else {
+        task.scope = null;
+      }
+    }
+
     // If we are starting a task (start !== null) stop the current active task
     if (updateTaskDto.start) {
       await this.stopActiveTask(userId);
