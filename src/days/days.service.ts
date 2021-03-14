@@ -80,6 +80,7 @@ export class DaysService {
           ...section,
           owner: userId,
         });
+
         return this.sectionRepository.save(s);
       }),
     );

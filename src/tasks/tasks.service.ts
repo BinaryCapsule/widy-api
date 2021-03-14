@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import moment from 'moment';
 import { Task } from './entities/task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { Scope } from '../scopes/entities/scope.entity';
 import { SectionsService } from '../sections/sections.service';
 import { Section } from '../sections/entities/section.entity';
@@ -66,6 +67,21 @@ export class TasksService {
     return task;
   }
 
+  async findActive(userId: string) {
+    const task = await this.taskRepository.findOne({
+      where: {
+        owner: userId,
+        start: Not(IsNull()),
+      },
+    });
+
+    if (!task) {
+      throw new NotFoundException('No active task found');
+    }
+
+    return task;
+  }
+
   async create(createTaskDto: CreateTaskDto, userId: string) {
     const scope = createTaskDto.scopeId ? await this.preloadScope(createTaskDto.scopeId) : null;
 
@@ -97,8 +113,18 @@ export class TasksService {
       throw new NotFoundException(`Task #${id} not found`);
     }
 
-    // Check if destination section exists
+    // If we are starting a task (start !== null) stop the current active task
+    if (updateTaskDto.start) {
+      await this.stopActiveTask(userId);
+    }
+
+    // We are moving a task to a different section (sectionId !== null)
     if (updateTaskDto.sectionId) {
+      if (!updateTaskDto.rank) {
+        throw new BadRequestException('Need to provide a rank');
+      }
+
+      // Check if destination section exists
       await this.sectionsService.findOne(updateTaskDto.sectionId, userId);
     }
 
@@ -119,5 +145,21 @@ export class TasksService {
     }
 
     return existingScope;
+  }
+
+  private async stopActiveTask(userId: string) {
+    try {
+      const task = await this.findActive(userId);
+
+      if (task.start) {
+        const newTime = task.time + moment().diff(task.start, 'seconds');
+        task.start = null;
+        task.time = newTime;
+      }
+
+      return this.taskRepository.save(task);
+    } catch {
+      return;
+    }
   }
 }

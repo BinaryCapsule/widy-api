@@ -6,4 +6,11 @@ export class UpdateTaskDto extends PartialType(CreateTaskDto) {
   @IsBoolean()
   @IsOptional()
   readonly isDone?: boolean;
+
+  @IsOptional()
+  readonly start?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  readonly isSchedule?: boolean;
 }
