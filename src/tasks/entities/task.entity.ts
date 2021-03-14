@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn, RelationId } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Scope } from '../../scopes/entities/scope.entity';
 import { Section } from '../../sections/entities/section.entity';
 
@@ -34,7 +34,7 @@ export class Task {
   @ManyToOne(
     () => Scope,
     scope => scope.tasks,
-    { eager: true },
+    { eager: true, cascade: true, onDelete: 'SET NULL' },
   )
   scope: Scope;
 
@@ -42,8 +42,9 @@ export class Task {
     () => Section,
     section => section.tasks,
   )
+  @JoinColumn({ name: 'sectionId' })
   section: Section;
 
-  @RelationId((task: Task) => task.section)
-  public sectionId: number;
+  @Column()
+  sectionId: number;
 }

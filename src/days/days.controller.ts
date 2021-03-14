@@ -1,16 +1,7 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { CreateDayDto } from './dto/create-day.dto';
 import { DaysService } from './days.service';
-import { Day } from './enities/day.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from '../auth/get-user.decorator';
 
@@ -25,7 +16,7 @@ export class DaysController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: number, @GetUser() user): Promise<Day> {
+  findOne(@Param('id') id: number, @GetUser() user) {
     return this.daysService.findOne(id, user.sub);
   }
 

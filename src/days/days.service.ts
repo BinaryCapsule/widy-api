@@ -7,12 +7,10 @@ import { CreateDayDto } from './dto/create-day.dto';
 import { Section } from '../sections/entities/section.entity';
 import { Task } from 'src/tasks/entities/task.entity';
 import { paginate, Pagination } from 'nestjs-typeorm-paginate';
-import { BLOCK_SIZE } from '../common/constants';
+import { BLOCK_SIZE, PAGINATION_LIMIT } from '../common/constants';
 
 @Injectable()
 export class DaysService {
-  private readonly PAGINATION_LIMIT: 100;
-
   constructor(
     @InjectRepository(Day)
     private dayRepository: Repository<Day>,
@@ -23,9 +21,9 @@ export class DaysService {
   ) {}
 
   async findAll(paginationQuery: PaginationQueryDto, user: string): Promise<Pagination<Day>> {
-    const { page = 1, limit = this.PAGINATION_LIMIT } = paginationQuery;
+    const { page = 1, limit = PAGINATION_LIMIT } = paginationQuery;
 
-    const safeLimit = limit > this.PAGINATION_LIMIT ? this.PAGINATION_LIMIT : limit;
+    const safeLimit = limit > PAGINATION_LIMIT ? PAGINATION_LIMIT : limit;
 
     return paginate<Day>(
       this.dayRepository,
@@ -44,6 +42,7 @@ export class DaysService {
 
     query.leftJoinAndSelect('day.sections', 'sections');
     query.leftJoinAndSelect('sections.tasks', 'tasks');
+    query.leftJoinAndSelect('tasks.scope', 'scope');
     query.where('day.owner = :userId', { userId });
     query.andWhere('day.id = :id', { id });
     query.orderBy({
@@ -60,7 +59,7 @@ export class DaysService {
     return day;
   }
 
-  async create(createDayDto: CreateDayDto, user: string) {
+  async create(createDayDto: CreateDayDto, userId: string) {
     const existingDay = await this.dayRepository.findOne({
       where: { day: createDayDto.day },
     });
@@ -79,15 +78,16 @@ export class DaysService {
       sectionData.map(async section => {
         const s = await this.sectionRepository.create({
           ...section,
-          owner: user,
+          owner: userId,
         });
+
         return this.sectionRepository.save(s);
       }),
     );
 
     const day = await this.dayRepository.create({
       ...createDayDto,
-      owner: user,
+      owner: userId,
       sections,
     });
 

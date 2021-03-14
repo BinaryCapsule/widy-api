@@ -1,15 +1,9 @@
-import { IsEnum, IsOptional, IsPositive } from 'class-validator';
+import { IsOptional } from 'class-validator';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { IsQueryBool } from '../../common/validators/IsQueryBool';
 
-export class ScopeQueryDto {
+export class ScopeQueryDto extends PaginationQueryDto {
   @IsOptional()
-  @IsPositive()
-  limit: number;
-
-  @IsOptional()
-  @IsPositive()
-  offset: number;
-
-  @IsOptional()
-  @IsEnum([0, 1])
+  @IsQueryBool()
   isArchived: number;
 }

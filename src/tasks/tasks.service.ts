@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import moment from 'moment';
 import { Task } from './entities/task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { Scope } from '../scopes/entities/scope.entity';
 import { SectionsService } from '../sections/sections.service';
 import { Section } from '../sections/entities/section.entity';
@@ -11,7 +12,8 @@ import { DaysService } from '../days/days.service';
 import { Day } from '../days/enities/day.entity';
 import { paginate } from 'nestjs-typeorm-paginate';
 import { PAGINATION_LIMIT } from '../common/constants';
-import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { TaskQueryDto } from './dto/task-query.dto';
+import { queryBoolFilter } from '../common/helpers/queryBoolFilter';
 
 @Injectable()
 export class TasksService {
@@ -32,8 +34,8 @@ export class TasksService {
     private readonly daysService: DaysService,
   ) {}
 
-  async findAll(paginationQuery: PaginationQueryDto, userId: string) {
-    const { page = 1, limit = PAGINATION_LIMIT } = paginationQuery;
+  async findAll(taskQueryDto: TaskQueryDto, userId: string) {
+    const { page = 1, limit = PAGINATION_LIMIT, isDone } = taskQueryDto;
 
     const safeLimit = limit > PAGINATION_LIMIT ? PAGINATION_LIMIT : limit;
 
@@ -41,14 +43,22 @@ export class TasksService {
       this.taskRepository,
       { limit: safeLimit, page },
       {
-        where: { owner: userId },
+        where: {
+          owner: userId,
+          isDone: queryBoolFilter(isDone),
+        },
         order: { id: 'DESC' },
       },
     );
   }
 
-  async findOne(id: number) {
-    const task = await this.taskRepository.findOne(id);
+  async findOne(id: number, userId: string) {
+    const task = await this.taskRepository.findOne({
+      where: {
+        id,
+        owner: userId,
+      },
+    });
 
     if (!task) {
       throw new NotFoundException(`Task #${id} not found`);
@@ -57,12 +67,25 @@ export class TasksService {
     return task;
   }
 
+  async findActive(userId: string) {
+    const task = await this.taskRepository.findOne({
+      where: {
+        owner: userId,
+        start: Not(IsNull()),
+      },
+    });
+
+    if (!task) {
+      throw new NotFoundException('No active task found');
+    }
+
+    return task;
+  }
+
   async create(createTaskDto: CreateTaskDto, userId: string) {
     const scope = createTaskDto.scopeId ? await this.preloadScope(createTaskDto.scopeId) : null;
 
-    const task = await this.taskRepository.create(
-      scope ? { ...createTaskDto, scope, owner: userId } : { ...createTaskDto, owner: userId },
-    );
+    const task = await this.taskRepository.create({ ...createTaskDto, scope, owner: userId });
 
     const day = await this.daysService.findOne(createTaskDto.dayId, userId);
 
@@ -79,21 +102,37 @@ export class TasksService {
     return task;
   }
 
-  async update(id: number, updateTaskDto: UpdateTaskDto) {
+  async update(id: number, updateTaskDto: UpdateTaskDto, userId: string) {
     const task = await this.taskRepository.preload({
       id,
       ...updateTaskDto,
+      owner: userId,
     });
 
     if (!task) {
       throw new NotFoundException(`Task #${id} not found`);
     }
 
+    // If we are starting a task (start !== null) stop the current active task
+    if (updateTaskDto.start) {
+      await this.stopActiveTask(userId);
+    }
+
+    // We are moving a task to a different section (sectionId !== null)
+    if (updateTaskDto.sectionId) {
+      if (!updateTaskDto.rank) {
+        throw new BadRequestException('Need to provide a rank');
+      }
+
+      // Check if destination section exists
+      await this.sectionsService.findOne(updateTaskDto.sectionId, userId);
+    }
+
     return this.taskRepository.save(task);
   }
 
-  async remove(id: number) {
-    const task = await this.findOne(id);
+  async remove(id: number, userId: string) {
+    const task = await this.findOne(id, userId);
 
     return this.taskRepository.remove(task);
   }
@@ -106,5 +145,21 @@ export class TasksService {
     }
 
     return existingScope;
+  }
+
+  private async stopActiveTask(userId: string) {
+    try {
+      const task = await this.findActive(userId);
+
+      if (task.start) {
+        const newTime = task.time + moment().diff(task.start, 'seconds');
+        task.start = null;
+        task.time = newTime;
+      }
+
+      return this.taskRepository.save(task);
+    } catch {
+      return;
+    }
   }
 }
