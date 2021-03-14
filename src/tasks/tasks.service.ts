@@ -97,6 +97,14 @@ export class TasksService {
       throw new NotFoundException(`Task #${id} not found`);
     }
 
+    if (updateTaskDto.scopeId !== undefined) {
+      if (updateTaskDto.scopeId) {
+        task.scope = await this.preloadScope(updateTaskDto.scopeId);
+      } else {
+        task.scope = null;
+      }
+    }
+
     // Check if destination section exists
     if (updateTaskDto.sectionId) {
       await this.sectionsService.findOne(updateTaskDto.sectionId, userId);
