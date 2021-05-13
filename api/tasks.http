@@ -1,0 +1,23 @@
+// "start": "2021-03-26T12:39:36.336Z"
+
+PATCH http://{{host}}/api/tasks/10
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "start": null,
+  "time": 1200
+}
+
+### 2021-03-26T12:39:36.336Z
+###
+GET http://{{host}}/api/tasks/active
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+GET http://{{host}}/api/tasks
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###

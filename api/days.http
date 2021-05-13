@@ -1,0 +1,19 @@
+POST http://{{host}}/api/days
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "day": "2020-04-05"
+}
+
+###
+GET http://{{host}}/api/days/1
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+GET http://{{host}}/api/days
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
