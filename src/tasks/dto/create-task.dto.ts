@@ -11,8 +11,7 @@ export class CreateTaskDto {
   readonly sectionId: number;
 
   @IsNumber()
-  @IsOptional()
-  readonly rank?: number;
+  readonly rank: number;
 
   @IsNumber()
   @IsOptional()

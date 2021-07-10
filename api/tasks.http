@@ -1,4 +1,18 @@
+POST http://{{host}}/api/tasks
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "dayId": 1,
+  "sectionId": 1,
+  "summary": "Nullam quis risus eget urna mollis ornare vel eu leo.",
+  "rank": 120000
+}
+
+
+###
 // "start": "2021-03-26T12:39:36.336Z"
+// "time": 1200
 
 PATCH http://{{host}}/api/tasks/10
 Content-Type: application/json

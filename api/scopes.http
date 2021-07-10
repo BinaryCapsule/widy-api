@@ -1,0 +1,3 @@
+GET http://{{host}}/api/scopes
+Accept: application/json
+Authorization: Bearer {{token}}
