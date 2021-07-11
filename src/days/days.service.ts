@@ -7,7 +7,7 @@ import { CreateDayDto } from './dto/create-day.dto';
 import { Section } from '../sections/entities/section.entity';
 import { Task } from 'src/tasks/entities/task.entity';
 import { paginate, Pagination } from 'nestjs-typeorm-paginate';
-import { BLOCK_SIZE, PAGINATION_LIMIT } from '../common/constants';
+import { RANK_BLOCK_SIZE, PAGINATION_LIMIT } from '../common/constants';
 
 @Injectable()
 export class DaysService {
@@ -69,9 +69,9 @@ export class DaysService {
     }
 
     const sectionData = [
-      { isPlan: true, title: 'Plan', rank: BLOCK_SIZE },
-      { isPlan: false, title: 'In the afternoon', rank: BLOCK_SIZE * 3 },
-      { isPlan: false, title: 'In the morning', rank: BLOCK_SIZE * 2 },
+      { isPlan: true, title: 'Plan', rank: RANK_BLOCK_SIZE },
+      { isPlan: false, title: 'In the afternoon', rank: RANK_BLOCK_SIZE * 3 },
+      { isPlan: false, title: 'In the morning', rank: RANK_BLOCK_SIZE * 2 },
     ];
 
     const sections = await Promise.all(

@@ -36,3 +36,6 @@ lerna-debug.log*
 # Config
 *.env
 ormconfig.js
+
+# IDEA
+/api/http-client.private.env.json

@@ -28,8 +28,10 @@ export class TasksController {
   }
 
   @Get('/active')
-  findActive(@GetUser() user: User) {
-    return this.tasksService.findActive(user.sub);
+  async findActive(@GetUser() user: User) {
+    const task = await this.tasksService.findActive(user.sub);
+
+    return { task };
   }
 
   @Get(':id')

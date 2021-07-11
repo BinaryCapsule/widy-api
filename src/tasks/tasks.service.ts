@@ -76,7 +76,7 @@ export class TasksService {
     });
 
     if (!task) {
-      throw new NotFoundException('No active task found');
+      return null;
     }
 
     return task;
@@ -158,6 +158,10 @@ export class TasksService {
   private async stopActiveTask(userId: string) {
     try {
       const task = await this.findActive(userId);
+
+      if (!task) {
+        return;
+      }
 
       if (task.start) {
         const newTime = task.time + moment().diff(task.start, 'seconds');
