@@ -10,9 +10,7 @@ Authorization: Bearer {{token}}
 }
 
 
-###
-// "start": "2021-03-26T12:39:36.336Z"
-// "time": 1200
+### Stop a task
 
 PATCH http://{{host}}/api/tasks/10
 Content-Type: application/json
@@ -23,13 +21,25 @@ Authorization: Bearer {{token}}
   "time": 1200
 }
 
-### 2021-03-26T12:39:36.336Z
-###
+### Start a task
+
+PATCH http://{{host}}/api/tasks/10
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "start": "2021-03-26T12:39:36.336Z",
+  "time": 1200
+}
+
+### Get active task id
+
 GET http://{{host}}/api/tasks/active
 Accept: application/json
 Authorization: Bearer {{token}}
 
-###
+### Get all tasks
+
 GET http://{{host}}/api/tasks
 Accept: application/json
 Authorization: Bearer {{token}}

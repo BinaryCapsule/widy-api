@@ -31,7 +31,7 @@ export class TasksController {
   async findActive(@GetUser() user: User) {
     const task = await this.tasksService.findActive(user.sub);
 
-    return { task };
+    return { id: task ? task.id : null };
   }
 
   @Get(':id')

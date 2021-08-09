@@ -99,6 +99,8 @@ export class TasksService {
 
     await this.dayRepository.save(day);
 
+    delete task.owner;
+
     return task;
   }
 
