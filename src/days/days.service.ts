@@ -42,7 +42,6 @@ export class DaysService {
 
     query.leftJoinAndSelect('day.sections', 'sections');
     query.leftJoinAndSelect('sections.tasks', 'tasks');
-    query.leftJoinAndSelect('tasks.scope', 'scope');
     query.where('day.owner = :userId', { userId });
     query.andWhere('day.id = :id', { id });
     query.orderBy({

@@ -34,9 +34,12 @@ export class Task {
   @ManyToOne(
     () => Scope,
     scope => scope.tasks,
-    { eager: true, cascade: true, onDelete: 'SET NULL' },
+    { onDelete: 'SET NULL' },
   )
-  scope: Scope;
+  @JoinColumn({ name: 'scopeId' })
+  scope: Scope | null;
+  @Column({ default: null })
+  scopeId: number | null;
 
   @ManyToOne(
     () => Section,
@@ -44,7 +47,6 @@ export class Task {
   )
   @JoinColumn({ name: 'sectionId' })
   section: Section;
-
   @Column()
   sectionId: number;
 }

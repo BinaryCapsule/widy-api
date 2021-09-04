@@ -29,6 +29,7 @@ export class ScopesService {
           owner: userId,
           isArchived: queryBoolFilter(isArchived),
         },
+        order: { id: 'DESC' },
       },
     );
   }
