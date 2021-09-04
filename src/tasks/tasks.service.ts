@@ -83,9 +83,7 @@ export class TasksService {
   }
 
   async create(createTaskDto: CreateTaskDto, userId: string) {
-    const scope = createTaskDto.scopeId ? await this.preloadScope(createTaskDto.scopeId) : null;
-
-    const task = await this.taskRepository.create({ ...createTaskDto, scope, owner: userId });
+    const task = await this.taskRepository.create({ ...createTaskDto, owner: userId });
 
     const day = await this.daysService.findOne(createTaskDto.dayId, userId);
 
@@ -115,14 +113,6 @@ export class TasksService {
       throw new NotFoundException(`Task #${id} not found`);
     }
 
-    if (updateTaskDto.scopeId !== undefined) {
-      if (updateTaskDto.scopeId) {
-        task.scope = await this.preloadScope(updateTaskDto.scopeId);
-      } else {
-        task.scope = null;
-      }
-    }
-
     // If we are starting a task (start !== null) stop the current active task
     if (updateTaskDto.start) {
       await this.stopActiveTask(userId);
@@ -145,16 +135,6 @@ export class TasksService {
     const task = await this.findOne(id, userId);
 
     return this.taskRepository.remove(task);
-  }
-
-  private async preloadScope(id: number): Promise<Scope> {
-    const existingScope = await this.scopeRepository.findOne(id);
-
-    if (!existingScope) {
-      throw new NotFoundException(`Scope with id ${id} not found`);
-    }
-
-    return existingScope;
   }
 
   private async stopActiveTask(userId: string) {
