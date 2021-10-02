@@ -1,0 +1,15 @@
+POST http://{{host}}/api/sections
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "isTomorrow": true,
+  "title": "Tomorrow"
+}
+
+###
+GET http://{{host}}/api/sections/tomorrow
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###

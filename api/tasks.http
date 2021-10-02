@@ -1,3 +1,5 @@
+### Create a task
+
 POST http://{{host}}/api/tasks
 Content-Type: application/json
 Authorization: Bearer {{token}}
@@ -9,6 +11,16 @@ Authorization: Bearer {{token}}
   "rank": 120000
 }
 
+### Move a task
+
+PATCH http://{{host}}/api/tasks/24
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "sectionId": 137,
+  "rank": 60000
+}
 
 ### Stop a task
 
@@ -35,6 +47,12 @@ Authorization: Bearer {{token}}
 ### Get active task id
 
 GET http://{{host}}/api/tasks/active
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Get task by id
+
+GET http://{{host}}/api/tasks/10
 Accept: application/json
 Authorization: Bearer {{token}}
 

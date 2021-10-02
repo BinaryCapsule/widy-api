@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, RelationId } from 'typeorm';
 import { Task } from '../../tasks/entities/task.entity';
 import { Day } from 'src/days/enities/day.entity';
+import { RANK_BLOCK_SIZE } from '../../common/constants';
 
 @Entity()
 export class Section {
@@ -10,10 +11,13 @@ export class Section {
   @Column()
   title: string;
 
-  @Column()
+  @Column({ default: false })
   isPlan: boolean;
 
-  @Column()
+  @Column({ default: false })
+  isTomorrow: boolean;
+
+  @Column({ default: RANK_BLOCK_SIZE })
   rank: number;
 
   @Column({ select: false })
