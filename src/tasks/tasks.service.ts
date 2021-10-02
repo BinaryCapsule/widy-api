@@ -11,7 +11,7 @@ import { Section } from '../sections/entities/section.entity';
 import { DaysService } from '../days/days.service';
 import { Day } from '../days/enities/day.entity';
 import { paginate } from 'nestjs-typeorm-paginate';
-import { PAGINATION_LIMIT } from '../common/constants';
+import { PAGINATION_LIMIT, RANK_BLOCK_SIZE } from '../common/constants';
 import { TaskQueryDto } from './dto/task-query.dto';
 import { queryBoolFilter } from '../common/helpers/queryBoolFilter';
 
@@ -135,6 +135,28 @@ export class TasksService {
     const task = await this.findOne(id, userId);
 
     return this.taskRepository.remove(task);
+  }
+
+  async moveToTomorrow(id: number, userId: string) {
+    const task = await this.taskRepository.findOne({
+      id,
+      owner: userId,
+    });
+
+    if (!task) {
+      throw new NotFoundException(`Task #${id} not found`);
+    }
+
+    const tomorrowSection = await this.sectionsService.findTomorrowSection(userId);
+
+    const { tasks } = tomorrowSection;
+
+    task.sectionId = tomorrowSection.id;
+    task.rank = RANK_BLOCK_SIZE + (tasks.length > 0 ? tasks[tasks.length - 1].rank : 0);
+    task.time = 0;
+    task.isDone = false;
+
+    return this.taskRepository.save(task);
   }
 
   private async stopActiveTask(userId: string) {

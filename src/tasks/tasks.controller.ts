@@ -44,6 +44,11 @@ export class TasksController {
     return this.tasksService.create(createTaskDto, user.sub);
   }
 
+  @Patch('/:id/to-tomorrow')
+  moveToTomorrow(@Param('id') id: number, @GetUser() user: User) {
+    return this.tasksService.moveToTomorrow(id, user.sub);
+  }
+
   @Patch(':id')
   update(@Param('id') id: number, @Body() updateTaskDto: UpdateTaskDto, @GetUser() user: User) {
     return this.tasksService.update(id, updateTaskDto, user.sub);

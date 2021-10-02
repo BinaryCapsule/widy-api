@@ -35,15 +35,20 @@ export class SectionsService {
   }
 
   async findTomorrowSection(userId: string) {
-    const tomorrowSection = await this.sectionRepository.findOne({
-      where: { isTomorrow: true, owner: userId },
-    });
+    const query = this.sectionRepository.createQueryBuilder('section');
+
+    query.leftJoinAndSelect('section.tasks', 'tasks');
+    query.where('section.owner = :userId', { userId });
+    query.andWhere('section.isTomorrow = :isTomorrow', { isTomorrow: true });
+    query.orderBy({ 'tasks.rank': 'ASC' });
+
+    const tomorrowSection = await query.getOne();
 
     if (!tomorrowSection) {
       const section: CreateSectionDto & { owner: string } = {
+        title: 'Tomorrow',
         isTomorrow: true,
         owner: userId,
-        title: 'Tomorrow',
       };
 
       const newSection = await this.create(section, userId);

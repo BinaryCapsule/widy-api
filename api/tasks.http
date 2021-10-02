@@ -1,3 +1,11 @@
+### Move task to tomorrow
+
+PATCH http://{{host}}/api/tasks/5/to-tomorrow
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{}
+
 ### Create a task
 
 POST http://{{host}}/api/tasks
