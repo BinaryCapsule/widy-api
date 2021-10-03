@@ -1,10 +1,10 @@
 {
   "name": "widy-api",
-  "version": "0.0.2",
-  "description": "",
-  "author": "",
+  "version": "0.0.3",
+  "description": "Widy - REST API",
+  "author": "Jose Nunes",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
