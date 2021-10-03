@@ -28,6 +28,10 @@ const sslObj =
       url: process.env.DATABASE_URL,
       autoLoadEntities: true,
       synchronize: process.env.TYPEORM_SYNC === 'true',
+      migrations: ['dist/migrations/*.js'],
+      cli: {
+        migrationsDir: 'src/migrations',
+      },
       ...sslObj,
     }),
     AuthModule,
