@@ -1,10 +1,11 @@
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { SectionVariant } from '../types/section-variant';
 
 export class CreateSectionDto {
   @IsString()
   readonly title: string;
 
-  @IsBoolean()
+  @IsEnum(SectionVariant)
   @IsOptional()
-  readonly isTomorrow?: boolean;
+  readonly variant?: SectionVariant;
 }
