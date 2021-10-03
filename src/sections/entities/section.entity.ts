@@ -1,6 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, RelationId } from 'typeorm';
 import { Task } from '../../tasks/entities/task.entity';
 import { Day } from 'src/days/enities/day.entity';
+import { RANK_BLOCK_SIZE } from '../../common/constants';
+import { SectionVariant } from '../types/section-variant';
 
 @Entity()
 export class Section {
@@ -10,10 +12,10 @@ export class Section {
   @Column()
   title: string;
 
-  @Column()
-  isPlan: boolean;
+  @Column({ default: 'work' })
+  variant: SectionVariant;
 
-  @Column()
+  @Column({ default: RANK_BLOCK_SIZE })
   rank: number;
 
   @Column({ select: false })
