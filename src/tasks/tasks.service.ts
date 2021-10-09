@@ -16,6 +16,7 @@ import { TaskQueryDto } from './dto/task-query.dto';
 import { queryBoolFilter } from '../common/helpers/queryBoolFilter';
 import { MoveToPlanDto } from './dto/move-to-plan.dto';
 import { MoveAllToPlanDto } from './dto/move-all-to-plan.dto';
+import { MoveAllToTomorrowDto } from './dto/move-all-to-tomorrow.dto';
 
 @Injectable()
 export class TasksService {
@@ -155,7 +156,9 @@ export class TasksService {
     task.sectionId = tomorrowSection.id;
     task.rank = RANK_BLOCK_SIZE + (tasks.length > 0 ? tasks[tasks.length - 1].rank : 0);
     task.time = 0;
+    task.start = null;
     task.isDone = false;
+    task.dayId = null;
 
     return this.taskRepository.save(task);
   }
@@ -176,22 +179,33 @@ export class TasksService {
     return this.taskRepository.save(task);
   }
 
-  async moveAllToPlan(moveAllToPlanDto: MoveAllToPlanDto, userId: string) {
-    const [tomorrowSection, todayDay] = await Promise.all([
+  async moveAllToPlan({ dayId }: MoveAllToPlanDto, userId: string) {
+    const [{ id: tomorrowSectionId }, { id: planSectionId }] = await Promise.all([
       this.sectionsService.findTomorrowSection(userId),
-      this.daysService.findOne(moveAllToPlanDto.dayId, userId),
+      this.sectionsService.findPlanSection(dayId, userId),
     ]);
-
-    const planSection = todayDay.sections.find(({ variant }) => variant === 'plan');
-
-    const planSectionId = planSection.id;
-    const tomorrowSectionId = tomorrowSection.id;
 
     await getConnection()
       .createQueryBuilder()
       .update(Task)
-      .set({ dayId: moveAllToPlanDto.dayId, sectionId: planSectionId })
+      .set({ dayId, sectionId: planSectionId })
       .where('sectionId = :sectionId', { sectionId: tomorrowSectionId })
+      .execute();
+
+    return {};
+  }
+
+  async moveAllToTomorrow({ dayId }: MoveAllToTomorrowDto, userId: string) {
+    const [{ id: tomorrowSectionId }, { id: planSectionId }] = await Promise.all([
+      this.sectionsService.findTomorrowSection(userId),
+      this.sectionsService.findPlanSection(dayId, userId),
+    ]);
+
+    await getConnection()
+      .createQueryBuilder()
+      .update(Task)
+      .set({ dayId: null, sectionId: tomorrowSectionId, isDone: false, start: null, time: 0 })
+      .where('sectionId = :sectionId', { sectionId: planSectionId })
       .execute();
 
     return {};

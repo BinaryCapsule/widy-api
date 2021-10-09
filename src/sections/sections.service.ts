@@ -4,12 +4,15 @@ import { Repository } from 'typeorm';
 import { Section } from './entities/section.entity';
 import { CreateSectionDto } from './dto/create-section.dto';
 import { SectionVariant } from './types/section-variant';
+import { DaysService } from '../days/days.service';
 
 @Injectable()
 export class SectionsService {
   constructor(
     @InjectRepository(Section)
     private readonly sectionRepository: Repository<Section>,
+
+    private readonly daysService: DaysService,
   ) {}
 
   async findOne(id: number, userId: string) {
@@ -60,6 +63,18 @@ export class SectionsService {
     }
 
     return tomorrowSection;
+  }
+
+  async findPlanSection(dayId: number, userId: string) {
+    const day = await this.daysService.findOne(dayId, userId);
+
+    const planSection = day.sections.find(({ variant }) => variant === 'plan');
+
+    if (!planSection) {
+      throw new NotFoundException(`Plan section not found for day with id #${dayId}`);
+    }
+
+    return planSection;
   }
 
   private async validateSection(createSectionDto: CreateSectionDto, userId: string) {

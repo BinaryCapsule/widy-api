@@ -18,6 +18,7 @@ import { GetUser } from '../auth/get-user.decorator';
 import { User } from '../auth/User';
 import { MoveToPlanDto } from './dto/move-to-plan.dto';
 import { MoveAllToPlanDto } from './dto/move-all-to-plan.dto';
+import { MoveAllToTomorrowDto } from './dto/move-all-to-tomorrow.dto';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('tasks')
@@ -39,6 +40,14 @@ export class TasksController {
   @Patch('/to-plan')
   async moveAllToPlan(@Body() moveAllToPlanDto: MoveAllToPlanDto, @GetUser() user: User) {
     return this.tasksService.moveAllToPlan(moveAllToPlanDto, user.sub);
+  }
+
+  @Patch('/to-tomorrow')
+  async moveAllToTomorrow(
+    @Body() moveAllToTomorrowDto: MoveAllToTomorrowDto,
+    @GetUser() user: User,
+  ) {
+    return this.tasksService.moveAllToTomorrow(moveAllToTomorrowDto, user.sub);
   }
 
   @Get(':id')
