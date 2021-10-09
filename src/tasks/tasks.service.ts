@@ -4,16 +4,19 @@ import { Task } from './entities/task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Not, Repository } from 'typeorm';
+import { getConnection, IsNull, Not, Repository } from 'typeorm';
 import { Scope } from '../scopes/entities/scope.entity';
 import { SectionsService } from '../sections/sections.service';
-import { Section } from '../sections/entities/section.entity';
 import { DaysService } from '../days/days.service';
+import { Section } from '../sections/entities/section.entity';
 import { Day } from '../days/enities/day.entity';
 import { paginate } from 'nestjs-typeorm-paginate';
 import { PAGINATION_LIMIT, RANK_BLOCK_SIZE } from '../common/constants';
 import { TaskQueryDto } from './dto/task-query.dto';
 import { queryBoolFilter } from '../common/helpers/queryBoolFilter';
+import { MoveToPlanDto } from './dto/move-to-plan.dto';
+import { MoveAllToPlanDto } from './dto/move-all-to-plan.dto';
+import { MoveAllToTomorrowDto } from './dto/move-all-to-tomorrow.dto';
 
 @Injectable()
 export class TasksService {
@@ -31,6 +34,7 @@ export class TasksService {
     private readonly dayRepository: Repository<Day>,
 
     private readonly sectionsService: SectionsService,
+
     private readonly daysService: DaysService,
   ) {}
 
@@ -85,9 +89,7 @@ export class TasksService {
   async create(createTaskDto: CreateTaskDto, userId: string) {
     const task = await this.taskRepository.create({ ...createTaskDto, owner: userId });
 
-    const day = await this.daysService.findOne(createTaskDto.dayId, userId);
-
-    const section = day.sections.find(({ id }) => id === createTaskDto.sectionId);
+    const section = await this.sectionsService.findOne(createTaskDto.sectionId, userId);
 
     if (!section) {
       throw new NotFoundException(`Section #${createTaskDto.sectionId} not found`);
@@ -95,7 +97,7 @@ export class TasksService {
 
     section.tasks.push(task);
 
-    await this.dayRepository.save(day);
+    await this.sectionRepository.save(section);
 
     delete task.owner;
 
@@ -154,9 +156,59 @@ export class TasksService {
     task.sectionId = tomorrowSection.id;
     task.rank = RANK_BLOCK_SIZE + (tasks.length > 0 ? tasks[tasks.length - 1].rank : 0);
     task.time = 0;
+    task.start = null;
     task.isDone = false;
+    task.dayId = null;
 
     return this.taskRepository.save(task);
+  }
+
+  async moveToPlan(id: number, moveToPlanDto: MoveToPlanDto, userId: string) {
+    const day = await this.daysService.findOne(moveToPlanDto.dayId, userId);
+    const task = await this.findOne(id, userId);
+
+    const planSection = day.sections.find(({ variant }) => variant === 'plan');
+    const { tasks } = planSection;
+
+    task.sectionId = planSection.id;
+    task.isDone = false;
+    task.time = 0;
+    task.rank = RANK_BLOCK_SIZE + (tasks.length > 0 ? tasks[tasks.length - 1].rank : 0);
+    task.dayId = moveToPlanDto.dayId;
+
+    return this.taskRepository.save(task);
+  }
+
+  async moveAllToPlan({ dayId }: MoveAllToPlanDto, userId: string) {
+    const [{ id: tomorrowSectionId }, { id: planSectionId }] = await Promise.all([
+      this.sectionsService.findTomorrowSection(userId),
+      this.sectionsService.findPlanSection(dayId, userId),
+    ]);
+
+    await getConnection()
+      .createQueryBuilder()
+      .update(Task)
+      .set({ dayId, sectionId: planSectionId })
+      .where('sectionId = :sectionId', { sectionId: tomorrowSectionId })
+      .execute();
+
+    return {};
+  }
+
+  async moveAllToTomorrow({ dayId }: MoveAllToTomorrowDto, userId: string) {
+    const [{ id: tomorrowSectionId }, { id: planSectionId }] = await Promise.all([
+      this.sectionsService.findTomorrowSection(userId),
+      this.sectionsService.findPlanSection(dayId, userId),
+    ]);
+
+    await getConnection()
+      .createQueryBuilder()
+      .update(Task)
+      .set({ dayId: null, sectionId: tomorrowSectionId, isDone: false, start: null, time: 0 })
+      .where('sectionId = :sectionId', { sectionId: planSectionId })
+      .execute();
+
+    return {};
   }
 
   private async stopActiveTask(userId: string) {

@@ -7,7 +7,7 @@ Authorization: Bearer {{token}}
 }
 
 ###
-GET http://{{host}}/api/days/44
+GET http://{{host}}/api/days/49
 Accept: application/json
 Authorization: Bearer {{token}}
 

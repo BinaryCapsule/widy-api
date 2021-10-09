@@ -25,7 +25,7 @@ export class Task {
   @Column({ select: false })
   owner: string;
 
-  @Column()
+  @Column({ default: null })
   dayId: number;
 
   @Column()
