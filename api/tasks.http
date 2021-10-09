@@ -1,6 +1,26 @@
+### Move all tasks to plan
+
+PATCH http://{{host}}/api/tasks/to-plan
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "dayId": 49
+}
+
+### Move task to plan
+
+PATCH http://{{host}}/api/tasks/163/to-plan
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "dayId": 46
+}
+
 ### Move task to tomorrow
 
-PATCH http://{{host}}/api/tasks/5/to-tomorrow
+PATCH http://{{host}}/api/tasks/164/to-tomorrow
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
