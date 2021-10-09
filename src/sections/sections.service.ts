@@ -5,6 +5,7 @@ import { Section } from './entities/section.entity';
 import { CreateSectionDto } from './dto/create-section.dto';
 import { SectionVariant } from './types/section-variant';
 import { DaysService } from '../days/days.service';
+import { RANK_BLOCK_SIZE } from '../common/constants';
 
 @Injectable()
 export class SectionsService {
@@ -75,6 +76,16 @@ export class SectionsService {
     }
 
     return planSection;
+  }
+
+  async redistributeRanks(sectionId: number, userId: string) {
+    const section = await this.findOne(sectionId, userId);
+
+    section.tasks.forEach((task, index) => {
+      task.rank = (index + 1) * RANK_BLOCK_SIZE;
+    });
+
+    await this.sectionRepository.save(section);
   }
 
   private async validateSection(createSectionDto: CreateSectionDto, userId: string) {

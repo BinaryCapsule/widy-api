@@ -192,6 +192,8 @@ export class TasksService {
       .where('sectionId = :sectionId', { sectionId: tomorrowSectionId })
       .execute();
 
+    await this.sectionsService.redistributeRanks(planSectionId, userId);
+
     return {};
   }
 
@@ -207,6 +209,8 @@ export class TasksService {
       .set({ dayId: null, sectionId: tomorrowSectionId, isDone: false, start: null, time: 0 })
       .where('sectionId = :sectionId', { sectionId: planSectionId })
       .execute();
+
+    await this.sectionsService.redistributeRanks(tomorrowSectionId, userId);
 
     return {};
   }
