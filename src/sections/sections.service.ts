@@ -81,9 +81,11 @@ export class SectionsService {
   async redistributeRanks(sectionId: number, userId: string) {
     const section = await this.findOne(sectionId, userId);
 
-    section.tasks.forEach((task, index) => {
-      task.rank = (index + 1) * RANK_BLOCK_SIZE;
-    });
+    section.tasks
+      .sort((a, b) => a.rank - b.rank)
+      .forEach((task, index) => {
+        task.rank = (index + 1) * RANK_BLOCK_SIZE;
+      });
 
     await this.sectionRepository.save(section);
   }
