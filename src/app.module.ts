@@ -7,16 +7,18 @@ import { ScopesModule } from './scopes/scopes.module';
 import { SectionsModule } from './sections/sections.module';
 import { DaysModule } from './days/days.module';
 import { AuthModule } from './auth/auth.module';
+import { ReportsModule } from './reports/reports.module';
 import connectionOptions from './ormconfig';
 
 @Module({
   imports: [
+    TypeOrmModule.forRoot(connectionOptions),
     TasksModule,
     ScopesModule,
     SectionsModule,
     DaysModule,
-    TypeOrmModule.forRoot(connectionOptions),
     AuthModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

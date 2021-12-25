@@ -4,14 +4,14 @@ import { Section } from './sections/entities/section.entity';
 import { Task } from './tasks/entities/task.entity';
 import { Scope } from './scopes/entities/scope.entity';
 
-const sslObj =
-  process.env.NODE_ENV === 'production'
-    ? {
-        ssl: {
-          rejectUnauthorized: false,
-        },
-      }
-    : {};
+// const sslObj =
+//   process.env.NODE_ENV === 'production'
+//     ? {
+//         ssl: {
+//           rejectUnauthorized: false,
+//         },
+//       }
+//     : {};
 
 const connectionOptions: ConnectionOptions = {
   type: 'postgres',
@@ -22,7 +22,10 @@ const connectionOptions: ConnectionOptions = {
   cli: {
     migrationsDir: 'src/migrations',
   },
-  ...sslObj,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+  // ...sslObj,
 };
 
 export = connectionOptions;

@@ -61,7 +61,7 @@ export class DaysService {
 
   async create(createDayDto: CreateDayDto, userId: string) {
     const existingDay = await this.dayRepository.findOne({
-      where: { day: createDayDto.day },
+      where: { day: createDayDto.day, owner: userId },
     });
 
     if (existingDay) {

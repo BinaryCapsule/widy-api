@@ -1,0 +1,5 @@
+### Get task by id
+
+GET http://{{host}}/api/reports/19
+Accept: application/json
+Authorization: Bearer {{token}}
