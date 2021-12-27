@@ -1,8 +1,8 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { SectionVariant } from '@prisma/client';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { CreateDayDto } from './dto/create-day.dto';
 import { PAGINATION_LIMIT, RANK_BLOCK_SIZE } from '../common/constants';
-import { SectionVariant } from '../sections/types/section-variant';
 import { PrismaService } from '../prisma.service';
 
 @Injectable()
@@ -96,15 +96,15 @@ export class DaysService {
     }
 
     const sections = [
-      { variant: SectionVariant.Plan, title: 'Plan', rank: RANK_BLOCK_SIZE, owner: userId },
+      { variant: SectionVariant.plan, title: 'Plan', rank: RANK_BLOCK_SIZE, owner: userId },
       {
-        variant: SectionVariant.Work,
+        variant: SectionVariant.work,
         title: 'In the morning',
         rank: RANK_BLOCK_SIZE * 2,
         owner: userId,
       },
       {
-        variant: SectionVariant.Work,
+        variant: SectionVariant.work,
         title: 'In the afternoon',
         rank: RANK_BLOCK_SIZE * 3,
         owner: userId,
