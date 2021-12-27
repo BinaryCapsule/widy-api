@@ -19,8 +19,8 @@ const days = [
 
 const geTasks = () => [
   { summary: faker.lorem.words(7), rank: RANK_BLOCK_SIZE, owner },
-  { summary: faker.lorem.words(7), rank: RANK_BLOCK_SIZE, owner },
-  { summary: faker.lorem.words(7), rank: RANK_BLOCK_SIZE, owner },
+  { summary: faker.lorem.words(7), rank: RANK_BLOCK_SIZE * 2, owner },
+  { summary: faker.lorem.words(7), rank: RANK_BLOCK_SIZE * 3, owner },
 ];
 
 const owner = 'auth0|5f8953c5fe68c800686004d1';

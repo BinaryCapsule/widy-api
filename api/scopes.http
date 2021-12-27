@@ -1,3 +1,38 @@
-GET http://{{host}}/api/scopes
+### Remove scope
+
+DELETE http://{{host}}/api/scopes/5
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+### Update scope
+
+PATCH http://{{host}}/api/scopes/5
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "shortCode": "SCOPE-9423"
+}
+
+### Create scope
+
+POST http://{{host}}/api/scopes
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Scope name 5434",
+  "shortCode": "SCOPE-231"
+}
+
+### Get scope by id
+
+GET http://{{host}}/api/scopes/5
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Get all scopes
+
+GET http://{{host}}/api/scopes?page=1&limit=4&isArchived=true
 Accept: application/json
 Authorization: Bearer {{token}}
