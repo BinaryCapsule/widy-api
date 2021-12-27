@@ -51,7 +51,6 @@ model Task {
   owner     String
   scopeId   Int?
   sectionId Int
-  dayId     Int?
   rank      Int
   scope     Scope?  @relation(fields: [scopeId], references: [id])
   section   Section @relation(fields: [sectionId], references: [id])

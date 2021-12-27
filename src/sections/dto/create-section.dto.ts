@@ -1,5 +1,5 @@
+import { SectionVariant } from '@prisma/client';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { SectionVariant } from '../types/section-variant';
 
 export class CreateSectionDto {
   @IsString()

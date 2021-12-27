@@ -38,3 +38,4 @@ lerna-debug.log*
 
 # IDEA
 /api/http-client.private.env.json
+/api/http-client.env.json

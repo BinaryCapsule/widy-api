@@ -6,10 +6,11 @@ import { Day } from '../days/enities/day.entity';
 import { SectionsController } from './sections.controller';
 import { SectionsService } from './sections.service';
 import { DaysService } from '../days/days.service';
+import { PrismaService } from '../prisma.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Section, Day, Task])],
   controllers: [SectionsController],
-  providers: [SectionsService, DaysService],
+  providers: [SectionsService, DaysService, PrismaService],
 })
 export class SectionsModule {}

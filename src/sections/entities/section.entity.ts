@@ -1,8 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, RelationId } from 'typeorm';
+import { SectionVariant } from '@prisma/client';
 import { Task } from '../../tasks/entities/task.entity';
 import { Day } from 'src/days/enities/day.entity';
 import { RANK_BLOCK_SIZE } from '../../common/constants';
-import { SectionVariant } from '../types/section-variant';
 
 @Entity()
 export class Section {
@@ -12,7 +12,7 @@ export class Section {
   @Column()
   title: string;
 
-  @Column({ default: 'work' })
+  @Column({ default: SectionVariant.work })
   variant: SectionVariant;
 
   @Column({ default: RANK_BLOCK_SIZE })

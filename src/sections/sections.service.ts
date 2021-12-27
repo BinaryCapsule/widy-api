@@ -1,75 +1,83 @@
+import { SectionVariant } from '@prisma/client';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Section } from './entities/section.entity';
+import { PrismaService } from '../prisma.service';
 import { CreateSectionDto } from './dto/create-section.dto';
-import { SectionVariant } from './types/section-variant';
-import { DaysService } from '../days/days.service';
 import { RANK_BLOCK_SIZE } from '../common/constants';
 
 @Injectable()
 export class SectionsService {
-  constructor(
-    @InjectRepository(Section)
-    private readonly sectionRepository: Repository<Section>,
-
-    private readonly daysService: DaysService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async findOne(id: number, userId: string) {
-    const section = await this.sectionRepository.findOne({
+    const section = await this.prisma.section.findUnique({
       where: {
         id,
-        owner: userId,
+      },
+
+      include: {
+        tasks: true,
       },
     });
 
-    if (!section) {
+    if (!section || section.owner !== userId) {
       throw new NotFoundException(`Section with id #${id} not found`);
     }
 
     return section;
   }
 
-  async create(createSectionDto: CreateSectionDto, userId: string): Promise<Section> {
+  async create(createSectionDto: CreateSectionDto, userId: string) {
     await this.validateSection(createSectionDto, userId);
 
-    const section = this.sectionRepository.create({ ...createSectionDto, owner: userId });
+    return this.prisma.section.create({
+      data: {
+        ...createSectionDto,
+        owner: userId,
+      },
 
-    const savedSection = await this.sectionRepository.save(section);
-
-    return { ...savedSection, tasks: [] };
+      include: {
+        tasks: true,
+      },
+    });
   }
 
-  async findTomorrowSection(userId: string): Promise<Section> {
-    const query = this.sectionRepository.createQueryBuilder('section');
+  async findTomorrowSection(userId: string) {
+    const tomorrowSection = await this.prisma.section.findFirst({
+      where: {
+        owner: userId,
+        variant: SectionVariant.tomorrow,
+      },
 
-    query.leftJoinAndSelect('section.tasks', 'tasks');
-    query.where('section.owner = :userId', { userId });
-    query.andWhere('section.variant = :variant', { variant: 'tomorrow' });
-    query.orderBy({ 'tasks.rank': 'ASC' });
+      include: {
+        tasks: true,
+      },
 
-    const tomorrowSection = await query.getOne();
+      orderBy: {
+        rank: 'asc',
+      },
+    });
 
     if (!tomorrowSection) {
       const section: CreateSectionDto & { owner: string } = {
         title: 'Tomorrow',
-        variant: SectionVariant.Tomorrow,
+        variant: SectionVariant.tomorrow,
         owner: userId,
       };
 
-      const newSection = await this.create(section, userId);
-
-      return { ...newSection, tasks: [] };
+      return this.create(section, userId);
     }
 
     return tomorrowSection;
   }
 
   async findPlanSection(dayId: number, userId: string) {
-    const day = await this.daysService.findOne(dayId, userId);
-
-    const planSection = day.sections.find(({ variant }) => variant === 'plan');
+    const planSection = await this.prisma.section.findFirst({
+      where: {
+        dayId,
+        owner: userId,
+        variant: SectionVariant.plan,
+      },
+    });
 
     if (!planSection) {
       throw new NotFoundException(`Plan section not found for day with id #${dayId}`);
@@ -81,19 +89,25 @@ export class SectionsService {
   async redistributeRanks(sectionId: number, userId: string) {
     const section = await this.findOne(sectionId, userId);
 
-    section.tasks
-      .sort((a, b) => a.rank - b.rank)
-      .forEach((task, index) => {
-        task.rank = (index + 1) * RANK_BLOCK_SIZE;
-      });
+    const sortedTasks = section.tasks.sort((a, b) => a.rank - b.rank);
 
-    await this.sectionRepository.save(section);
+    await this.prisma.$transaction(
+      sortedTasks.map(({ id }, index) =>
+        this.prisma.task.update({
+          data: { rank: (index + 1) * RANK_BLOCK_SIZE },
+          where: { id },
+        }),
+      ),
+    );
   }
 
   private async validateSection(createSectionDto: CreateSectionDto, userId: string) {
-    if (createSectionDto.variant === SectionVariant.Tomorrow) {
-      const existingTomorrowSection = await this.sectionRepository.findOne({
-        where: { variant: SectionVariant.Tomorrow, owner: userId },
+    if (createSectionDto.variant === SectionVariant.tomorrow) {
+      const existingTomorrowSection = await this.prisma.section.findFirst({
+        where: {
+          variant: SectionVariant.tomorrow,
+          owner: userId,
+        },
       });
 
       if (existingTomorrowSection) {
