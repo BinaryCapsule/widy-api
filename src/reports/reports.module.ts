@@ -4,10 +4,11 @@ import { ReportsService } from './reports.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Task } from '../tasks/entities/task.entity';
 import { Day } from '../days/enities/day.entity';
+import { PrismaService } from '../prisma.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Task, Day])],
   controllers: [ReportsController],
-  providers: [ReportsService],
+  providers: [ReportsService, PrismaService],
 })
 export class ReportsModule {}
