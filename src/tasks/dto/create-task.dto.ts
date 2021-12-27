@@ -5,10 +5,6 @@ export class CreateTaskDto {
   readonly summary: string;
 
   @IsNumber()
-  @IsOptional()
-  readonly dayId?: number;
-
-  @IsNumber()
   readonly sectionId: number;
 
   @IsNumber()

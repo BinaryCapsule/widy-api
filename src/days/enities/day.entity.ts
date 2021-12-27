@@ -6,7 +6,7 @@ export class Day {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
+  @Column()
   day: string;
 
   @Column({ select: false })

@@ -8,10 +8,11 @@ import { Section } from '../sections/entities/section.entity';
 import { SectionsService } from '../sections/sections.service';
 import { DaysService } from '../days/days.service';
 import { Day } from 'src/days/enities/day.entity';
+import { PrismaService } from '../prisma.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Task, Scope, Section, Day])],
   controllers: [TasksController],
-  providers: [TasksService, SectionsService, DaysService],
+  providers: [TasksService, SectionsService, DaysService, PrismaService],
 })
 export class TasksModule {}

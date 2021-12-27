@@ -1,41 +1,24 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import moment from 'moment';
-import { Task } from './entities/task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { getConnection, IsNull, Not, Repository } from 'typeorm';
-import { Scope } from '../scopes/entities/scope.entity';
 import { SectionsService } from '../sections/sections.service';
 import { DaysService } from '../days/days.service';
-import { Section } from '../sections/entities/section.entity';
-import { Day } from '../days/enities/day.entity';
-import { paginate } from 'nestjs-typeorm-paginate';
 import { PAGINATION_LIMIT, RANK_BLOCK_SIZE } from '../common/constants';
 import { TaskQueryDto } from './dto/task-query.dto';
-import { queryBoolFilter } from '../common/helpers/queryBoolFilter';
 import { MoveToPlanDto } from './dto/move-to-plan.dto';
 import { MoveAllToPlanDto } from './dto/move-all-to-plan.dto';
 import { MoveAllToTomorrowDto } from './dto/move-all-to-tomorrow.dto';
+import { PrismaService } from '../prisma.service';
 
 @Injectable()
 export class TasksService {
   constructor(
-    @InjectRepository(Task)
-    private readonly taskRepository: Repository<Task>,
-
-    @InjectRepository(Scope)
-    private readonly scopeRepository: Repository<Scope>,
-
-    @InjectRepository(Section)
-    private readonly sectionRepository: Repository<Section>,
-
-    @InjectRepository(Day)
-    private readonly dayRepository: Repository<Day>,
-
     private readonly sectionsService: SectionsService,
 
     private readonly daysService: DaysService,
+
+    private readonly prisma: PrismaService,
   ) {}
 
   async findAll(taskQueryDto: TaskQueryDto, userId: string) {
@@ -43,28 +26,29 @@ export class TasksService {
 
     const safeLimit = limit > PAGINATION_LIMIT ? PAGINATION_LIMIT : limit;
 
-    return paginate<Task>(
-      this.taskRepository,
-      { limit: safeLimit, page },
-      {
-        where: {
-          owner: userId,
-          isDone: queryBoolFilter(isDone),
-        },
-        order: { id: 'DESC' },
+    return this.prisma.task.findMany({
+      skip: (page - 1) * safeLimit,
+      take: safeLimit,
+
+      where: {
+        owner: userId,
+        isDone: isDone !== undefined ? isDone === 'true' : undefined,
       },
-    );
+
+      orderBy: {
+        id: 'desc',
+      },
+    });
   }
 
   async findOne(id: number, userId: string) {
-    const task = await this.taskRepository.findOne({
+    const task = await this.prisma.task.findUnique({
       where: {
         id,
-        owner: userId,
       },
     });
 
-    if (!task) {
+    if (!task || task.owner !== userId) {
       throw new NotFoundException(`Task #${id} not found`);
     }
 
@@ -72,10 +56,10 @@ export class TasksService {
   }
 
   async findActive(userId: string) {
-    const task = await this.taskRepository.findOne({
+    const task = await this.prisma.task.findFirst({
       where: {
         owner: userId,
-        start: Not(IsNull()),
+        start: { not: null },
       },
     });
 
@@ -87,33 +71,32 @@ export class TasksService {
   }
 
   async create(createTaskDto: CreateTaskDto, userId: string) {
-    const task = await this.taskRepository.create({ ...createTaskDto, owner: userId });
-
     const section = await this.sectionsService.findOne(createTaskDto.sectionId, userId);
 
     if (!section) {
       throw new NotFoundException(`Section #${createTaskDto.sectionId} not found`);
     }
 
-    section.tasks.push(task);
-
-    await this.sectionRepository.save(section);
-
-    delete task.owner;
-
-    return task;
+    return this.prisma.task.create({
+      data: {
+        summary: createTaskDto.summary,
+        rank: createTaskDto.rank,
+        section: {
+          connect: { id: createTaskDto.sectionId },
+        },
+        scope: createTaskDto.scopeId
+          ? {
+              connect: { id: createTaskDto.scopeId },
+            }
+          : undefined,
+        owner: userId,
+      },
+    });
   }
 
   async update(id: number, updateTaskDto: UpdateTaskDto, userId: string) {
-    const task = await this.taskRepository.preload({
-      id,
-      ...updateTaskDto,
-      owner: userId,
-    });
-
-    if (!task) {
-      throw new NotFoundException(`Task #${id} not found`);
-    }
+    // Check if task exists
+    await this.findOne(id, userId);
 
     // If we are starting a task (start !== null) stop the current active task
     if (updateTaskDto.start) {
@@ -130,53 +113,61 @@ export class TasksService {
       await this.sectionsService.findOne(updateTaskDto.sectionId, userId);
     }
 
-    return this.taskRepository.save(task);
+    return this.prisma.task.update({
+      data: updateTaskDto,
+
+      where: {
+        id,
+      },
+    });
   }
 
   async remove(id: number, userId: string) {
-    const task = await this.findOne(id, userId);
+    await this.findOne(id, userId);
 
-    return this.taskRepository.remove(task);
+    return this.prisma.task.delete({ where: { id }, select: { id: true } });
   }
 
   async moveToTomorrow(id: number, userId: string) {
-    const task = await this.taskRepository.findOne({
-      id,
-      owner: userId,
-    });
-
-    if (!task) {
-      throw new NotFoundException(`Task #${id} not found`);
-    }
+    await this.findOne(id, userId);
 
     const tomorrowSection = await this.sectionsService.findTomorrowSection(userId);
 
     const { tasks } = tomorrowSection;
 
-    task.sectionId = tomorrowSection.id;
-    task.rank = RANK_BLOCK_SIZE + (tasks.length > 0 ? tasks[tasks.length - 1].rank : 0);
-    task.time = 0;
-    task.start = null;
-    task.isDone = false;
-    task.dayId = null;
-
-    return this.taskRepository.save(task);
+    return this.prisma.task.update({
+      where: { id },
+      data: {
+        sectionId: tomorrowSection.id,
+        rank: RANK_BLOCK_SIZE + (tasks.length > 0 ? tasks[tasks.length - 1].rank : 0),
+        time: 0,
+        start: null,
+        isDone: false,
+      },
+      select: { id: true },
+    });
   }
 
   async moveToPlan(id: number, moveToPlanDto: MoveToPlanDto, userId: string) {
+    await this.findOne(id, userId);
+
     const day = await this.daysService.findOne(moveToPlanDto.dayId, userId);
-    const task = await this.findOne(id, userId);
 
     const planSection = day.sections.find(({ variant }) => variant === 'plan');
-    const { tasks } = planSection;
 
-    task.sectionId = planSection.id;
-    task.isDone = false;
-    task.time = 0;
-    task.rank = RANK_BLOCK_SIZE + (tasks.length > 0 ? tasks[tasks.length - 1].rank : 0);
-    task.dayId = moveToPlanDto.dayId;
+    const { id: planSectionId, tasks } = planSection;
 
-    return this.taskRepository.save(task);
+    return this.prisma.task.update({
+      data: {
+        isDone: false,
+        time: 0,
+        rank: RANK_BLOCK_SIZE + (tasks.length > 0 ? tasks[tasks.length - 1].rank : 0),
+        section: {
+          connect: { id: planSectionId },
+        },
+      },
+      where: { id },
+    });
   }
 
   async moveAllToPlan({ dayId }: MoveAllToPlanDto, userId: string) {
@@ -185,12 +176,16 @@ export class TasksService {
       this.sectionsService.findPlanSection(dayId, userId),
     ]);
 
-    await getConnection()
-      .createQueryBuilder()
-      .update(Task)
-      .set({ dayId, sectionId: planSectionId })
-      .where('sectionId = :sectionId', { sectionId: tomorrowSectionId })
-      .execute();
+    await this.prisma.task.updateMany({
+      data: {
+        sectionId: planSectionId,
+      },
+
+      where: {
+        owner: userId,
+        sectionId: tomorrowSectionId,
+      },
+    });
 
     await this.sectionsService.redistributeRanks(planSectionId, userId);
 
@@ -203,12 +198,16 @@ export class TasksService {
       this.sectionsService.findPlanSection(dayId, userId),
     ]);
 
-    await getConnection()
-      .createQueryBuilder()
-      .update(Task)
-      .set({ dayId: null, sectionId: tomorrowSectionId, isDone: false, start: null, time: 0 })
-      .where('sectionId = :sectionId', { sectionId: planSectionId })
-      .execute();
+    await this.prisma.task.updateMany({
+      data: {
+        sectionId: tomorrowSectionId,
+      },
+
+      where: {
+        owner: userId,
+        sectionId: planSectionId,
+      },
+    });
 
     await this.sectionsService.redistributeRanks(tomorrowSectionId, userId);
 
@@ -223,13 +222,15 @@ export class TasksService {
         return;
       }
 
-      if (task.start) {
-        const newTime = task.time + moment().diff(task.start, 'seconds');
-        task.start = null;
-        task.time = newTime;
-      }
+      const newTime = task.time + moment().diff(task.start, 'seconds');
 
-      return this.taskRepository.save(task);
+      return this.prisma.task.update({
+        where: { id: task.id },
+        data: {
+          start: null,
+          time: newTime,
+        },
+      });
     } catch {
       return;
     }

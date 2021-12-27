@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model Day {
+  id       Int       @id @default(autoincrement())
+  day      String
+  owner    String
+  sections Section[]
+
+  @@map("day")
+}
+
+model Scope {
+  id         Int     @id @default(autoincrement())
+  name       String
+  shortCode  String
+  isArchived Boolean @default(false)
+  owner      String
+  tasks      Task[]
+
+  @@map("scope")
+}
+
+model Section {
+  id      Int            @id @default(autoincrement())
+  title   String
+  dayId   Int?
+  rank    Int            @default(60000)
+  owner   String
+  variant SectionVariant @default(work)
+  day     Day?           @relation(fields: [dayId], references: [id])
+  tasks   Task[]
+
+  @@map("section")
+}
+
+model Task {
+  id        Int     @id @default(autoincrement())
+  summary   String
+  notes     String  @default("")
+  time      Int     @default(0)
+  isDone    Boolean @default(false)
+  start     String?
+  owner     String
+  scopeId   Int?
+  sectionId Int
+  dayId     Int?
+  rank      Int
+  scope     Scope?  @relation(fields: [scopeId], references: [id])
+  section   Section @relation(fields: [sectionId], references: [id])
+
+  @@map("task")
+}
+
+enum SectionVariant {
+  work
+  plan
+  tomorrow
+}
