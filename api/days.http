@@ -1,17 +1,21 @@
+### Create day
+
 POST http://{{host}}/api/days
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "day": "2021-12-25"
+  "day": "2021-11-27"
 }
 
-###
-GET http://{{host}}/api/days/49
+### Get day by id
+
+GET http://{{host}}/api/days/45
 Accept: application/json
 Authorization: Bearer {{token}}
 
-###
+### Get days
+
 GET http://{{host}}/api/days
 Accept: application/json
 Authorization: Bearer {{token}}
