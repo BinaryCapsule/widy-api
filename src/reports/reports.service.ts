@@ -1,24 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Task } from '../tasks/entities/task.entity';
-import { Repository } from 'typeorm';
-import { Day } from '../days/enities/day.entity';
+import { PrismaService } from '../prisma.service';
 
 @Injectable()
 export class ReportsService {
-  constructor(
-    @InjectRepository(Task)
-    private readonly taskRepository: Repository<Task>,
-
-    @InjectRepository(Day)
-    private readonly dayRepository: Repository<Day>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async getDayReport(dayId: number, userId: string) {
-    const day = await this.dayRepository.findOne({
+    const day = await this.prisma.day.findFirst({
       where: {
         id: dayId,
         owner: userId,
+      },
+
+      include: {
+        sections: {
+          select: {
+            id: true,
+          },
+        },
       },
     });
 
@@ -26,13 +25,13 @@ export class ReportsService {
       throw new NotFoundException(`Day #${dayId} not found`);
     }
 
-    const query = this.taskRepository.createQueryBuilder('task');
+    const sectionIds = day.sections.map(({ id }) => ({ sectionId: id }));
 
-    query.leftJoinAndSelect('task.section', 'section');
-    query.where('task.owner = :userId', { userId });
-    query.andWhere('task.dayId = :dayId', { dayId });
-
-    const tasks = await query.getMany();
+    const tasks = await this.prisma.task.findMany({
+      where: {
+        OR: sectionIds,
+      },
+    });
 
     const totalTime = tasks.reduce((acc, { time }) => acc + time, 0);
     const completedTasks = tasks.filter(({ isDone }) => isDone).length;
