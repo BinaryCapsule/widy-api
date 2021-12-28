@@ -1,3 +1,9 @@
+### Delete task
+
+DELETE http://{{host}}/api/tasks/51
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
 ### Move all tasks to tomorrow
 
 PATCH http://{{host}}/api/tasks/to-tomorrow
@@ -30,7 +36,7 @@ Authorization: Bearer {{token}}
 
 ### Move task to tomorrow
 
-PATCH http://{{host}}/api/tasks/164/to-tomorrow
+PATCH http://{{host}}/api/tasks/46/to-tomorrow
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
@@ -43,10 +49,9 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "dayId": 1,
-  "sectionId": 1,
+  "sectionId": 29,
   "summary": "Nullam quis risus eget urna mollis ornare vel eu leo.",
-  "rank": 120000
+  "rank": 60000
 }
 
 ### Move a task
@@ -82,6 +87,16 @@ Authorization: Bearer {{token}}
   "time": 1200
 }
 
+### Update a task
+
+PATCH http://{{host}}/api/tasks/12
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "isDone": true
+}
+
 ### Get active task id
 
 GET http://{{host}}/api/tasks/active
@@ -96,7 +111,7 @@ Authorization: Bearer {{token}}
 
 ### Get all tasks
 
-GET http://{{host}}/api/tasks
+GET http://{{host}}/api/tasks?page=1&limit=100
 Accept: application/json
 Authorization: Bearer {{token}}
 

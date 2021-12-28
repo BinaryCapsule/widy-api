@@ -1,2 +1,3 @@
 web: npm run start:prod
-release: npm run typeorm migration:run
+
+release: npx prisma migrate deploy
