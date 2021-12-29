@@ -1,6 +1,6 @@
 {
   "name": "widy-api",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Widy - REST API",
   "author": "Jose Nunes",
   "private": true,
