@@ -2,19 +2,19 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { CreateScopeDto } from './dto/create-scope.dto';
 import { UpdateScopeDto } from './dto/update-scope.dto';
 import { ScopeQueryDto } from './dto/scope-query.dto';
-import { PAGINATION_LIMIT } from 'src/common/constants';
+import { PAGINATION_LIMIT } from '../common/constants';
 import { PrismaService } from '../prisma.service';
 
 @Injectable()
 export class ScopesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll(scopeQueryDto: ScopeQueryDto, userId: string) {
+  async findAll(scopeQueryDto: ScopeQueryDto, userId: string) {
     const { page = 1, limit = PAGINATION_LIMIT, isArchived } = scopeQueryDto;
 
     const safeLimit = limit > PAGINATION_LIMIT ? PAGINATION_LIMIT : limit;
 
-    return this.prisma.scope.findMany({
+    const scopes = await this.prisma.scope.findMany({
       skip: (page - 1) * safeLimit,
       take: safeLimit,
 
@@ -26,7 +26,34 @@ export class ScopesService {
       orderBy: {
         id: 'desc',
       },
+
+      select: {
+        id: true,
+        isArchived: true,
+        name: true,
+        shortCode: true,
+      },
     });
+
+    const totalItems = await this.prisma.scope.count({
+      where: {
+        owner: userId,
+        isArchived: isArchived !== undefined ? isArchived === 'true' : undefined,
+      },
+    });
+
+    const itemCount = scopes.length;
+
+    return {
+      items: scopes,
+      meta: {
+        totalItems,
+        itemCount,
+        itemsPerPage: safeLimit,
+        totalPages: Math.ceil(totalItems / safeLimit),
+        currentPage: page,
+      },
+    };
   }
 
   async findOne(id: number, userId: string) {
