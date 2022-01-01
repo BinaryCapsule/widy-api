@@ -1,5 +1,5 @@
 ### Get task by id
 
-GET http://{{host}}/api/reports/45
+GET http://{{host}}/api/reports/2
 Accept: application/json
 Authorization: Bearer {{token}}

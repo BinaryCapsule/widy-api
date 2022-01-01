@@ -16,6 +16,8 @@ export class ReportsService {
         sections: {
           select: {
             id: true,
+            variant: true,
+            title: true,
           },
         },
       },
@@ -25,11 +27,22 @@ export class ReportsService {
       throw new NotFoundException(`Day #${dayId} not found`);
     }
 
-    const sectionIds = day.sections.map(({ id }) => ({ sectionId: id }));
+    const sectionIds = day.sections
+      .filter(({ variant }) => variant !== 'plan')
+      .map(({ id }) => ({ sectionId: id }));
 
     const tasks = await this.prisma.task.findMany({
       where: {
         OR: sectionIds,
+      },
+
+      include: {
+        scope: {
+          select: {
+            name: true,
+            shortCode: true,
+          },
+        },
       },
     });
 
@@ -38,6 +51,7 @@ export class ReportsService {
 
     return {
       day: day.day,
+      sections: day.sections,
       tasks,
       totalTime,
       completedTasks,
