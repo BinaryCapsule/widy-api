@@ -1,6 +1,6 @@
 import { SectionVariant } from '@prisma/client';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateSectionDto } from './dto/create-section.dto';
 import { RANK_BLOCK_SIZE } from '../common/constants';
 

@@ -9,7 +9,7 @@ import { TaskQueryDto } from './dto/task-query.dto';
 import { MoveToPlanDto } from './dto/move-to-plan.dto';
 import { MoveAllToPlanDto } from './dto/move-all-to-plan.dto';
 import { MoveAllToTomorrowDto } from './dto/move-all-to-tomorrow.dto';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class TasksService {

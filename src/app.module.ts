@@ -7,9 +7,18 @@ import { SectionsModule } from './sections/sections.module';
 import { DaysModule } from './days/days.module';
 import { AuthModule } from './auth/auth.module';
 import { ReportsModule } from './reports/reports.module';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
-  imports: [TasksModule, ScopesModule, SectionsModule, DaysModule, AuthModule, ReportsModule],
+  imports: [
+    TasksModule,
+    ScopesModule,
+    SectionsModule,
+    DaysModule,
+    AuthModule,
+    ReportsModule,
+    PrismaModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
