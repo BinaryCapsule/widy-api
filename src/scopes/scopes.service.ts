@@ -3,7 +3,7 @@ import { CreateScopeDto } from './dto/create-scope.dto';
 import { UpdateScopeDto } from './dto/update-scope.dto';
 import { ScopeQueryDto } from './dto/scope-query.dto';
 import { PAGINATION_LIMIT } from '../common/constants';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class ScopesService {

@@ -3,7 +3,7 @@ import { SectionVariant } from '@prisma/client';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { CreateDayDto } from './dto/create-day.dto';
 import { PAGINATION_LIMIT, RANK_BLOCK_SIZE } from '../common/constants';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class DaysService {
