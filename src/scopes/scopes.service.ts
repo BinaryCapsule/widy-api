@@ -20,7 +20,7 @@ export class ScopesService {
 
       where: {
         owner: userId,
-        isArchived: isArchived !== undefined ? isArchived === 'true' : undefined,
+        isArchived: isArchived === 'true',
       },
 
       orderBy: {
@@ -71,7 +71,7 @@ export class ScopesService {
   }
 
   async create(createScopeDto: CreateScopeDto, userId: string) {
-    await this.validateScopeCode(createScopeDto.shortCode, userId);
+    await this.validateScopeCode(createScopeDto.shortCode, userId, true);
 
     return this.prisma.scope.create({
       data: {
@@ -109,7 +109,7 @@ export class ScopesService {
     });
   }
 
-  private async validateScopeCode(shortCode: string, userId: string) {
+  private async validateScopeCode(shortCode: string, userId: string, isNew = false) {
     const existingScopeWithCode = await this.prisma.scope.findFirst({
       where: {
         shortCode,
@@ -118,7 +118,9 @@ export class ScopesService {
     });
 
     if (existingScopeWithCode) {
-      throw new ConflictException('Scope code already exists');
+      if (isNew || existingScopeWithCode.shortCode !== shortCode) {
+        throw new ConflictException('Scope code already exists');
+      }
     }
   }
 }
